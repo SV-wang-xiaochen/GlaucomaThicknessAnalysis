@@ -54,11 +54,42 @@ for item in folder_list[:10]:
     thickness_row.insert(0, 'Eye', eye)
     thickness_row.insert(0, 'Entry', info)
     thickness = pd.concat([thickness, thickness_row])
-# set indices
-df_copy = pd.DataFrame(np.zeros(thickness.shape))
-df_copy.columns = thickness.columns
-thickness.index = df_copy.index
+
+thickness = thickness.reset_index(drop=True)
 print(thickness)
 
 thickness_sorted = thickness.sort_values('Entry')
-print(thickness_sorted)
+# print(thickness_sorted)
+
+thickness_shuffle = thickness.sample(frac=1)
+# print(thickness_shuffle)
+
+# a = thickness_sorted.drop(['Entry', 'Eye', 'Protocol'], axis=1)
+# b = thickness_shuffle.drop(['Entry', 'Eye', 'Protocol'], axis=1)
+
+# # for c in ['R1', 'R2', 'R3', 'R4', 'R5', 'R6']:
+for c in ['R1']:
+    c1 = thickness_sorted[c].reset_index(drop=True)
+    c2 = thickness_shuffle[c].reset_index(drop=True)
+    diff = c1-c2
+    print(diff)
+    # Calculate mean
+    mean_value = diff.mean()
+
+    # Calculate standard deviation
+    std_deviation = diff.std()
+
+    # Calculate minimum and maximum
+    min_value = diff.min()
+    max_value = diff.max()
+
+    # Calculate other statistics using describe method
+    statistics_summary = diff.describe()
+
+    # Print the results
+    print(f"Mean: {mean_value}")
+    print(f"Standard Deviation: {std_deviation}")
+    print(f"Minimum: {min_value}")
+    print(f"Maximum: {max_value}")
+    print("\nAdditional statistics summary:")
+    print(statistics_summary)
