@@ -2,7 +2,7 @@ import os
 import glob
 import pandas as pd
 import re
-
+import numpy as np
 
 def get_latest_file(file_path_list):
 
@@ -23,7 +23,7 @@ def extract_info(input_string):
     match = pattern.match(input_string)
 
     if match:
-        return f"{match.group('ID')}_{match.group('EYE')}_{match.group('PROTOCOL')}"
+        return f"{match.group('ID')}_{match.group('EYE')}_{match.group('PROTOCOL')}", match.group('EYE'), match.group('PROTOCOL')
     else:
         return None
 
@@ -31,9 +31,9 @@ def extract_info(input_string):
 path = r'..\Dataset\GlaucomaThickness\Export_20231120'
 folder_list = glob.glob(f'{path}/*/')
 
-thickness = pd.DataFrame(columns=['Info', 'R1', 'R2', 'R3', 'R4', 'R5', 'R6'])
+thickness = pd.DataFrame(columns=['Entry', 'Eye', 'Protocol', 'R1', 'R2', 'R3', 'R4', 'R5', 'R6'])
 
-for item in folder_list:
+for item in folder_list[:10]:
 
     folder_name = item.split('\\')[-2]
     print(f'folder name: {folder_name}')
@@ -48,7 +48,17 @@ for item in folder_list:
 
     thickness_row = pd.read_csv(thickness_csv, sep=',', names=['R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'INVALID'])
     thickness_row = thickness_row.iloc[:, 0:6]
-    thickness_row.insert(0, 'Info', extract_info(folder_name))
+
+    info, eye, protocol = extract_info(folder_name)
+    thickness_row.insert(0, 'Protocol', protocol)
+    thickness_row.insert(0, 'Eye', eye)
+    thickness_row.insert(0, 'Entry', info)
     thickness = pd.concat([thickness, thickness_row])
+# set indices
+df_copy = pd.DataFrame(np.zeros(thickness.shape))
+df_copy.columns = thickness.columns
+thickness.index = df_copy.index
 print(thickness)
 
+thickness_sorted = thickness.sort_values('Entry')
+print(thickness_sorted)
