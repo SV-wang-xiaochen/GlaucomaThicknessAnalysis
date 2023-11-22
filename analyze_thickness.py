@@ -58,6 +58,27 @@ def prepare_thickness(path):
 
     return thickness
 
+def stats(ascan_thickness, normal_thickness, filter):
+
+    # remove columns of info
+    ascan_thickness = ascan_thickness.drop(['Entry', 'Eye', 'Protocol'], axis=1)
+    normal_thickness = normal_thickness.drop(['Entry', 'Eye', 'Protocol'], axis=1)
+
+    print(f"统计-{filter['Eye']}-{filter['Protocol']}\n")
+    print("基于Ascan厚度: mm")
+    print(ascan_thickness.describe(percentiles=[]))
+    print('\n')
+    print("基于法线厚度: mm")
+    print(normal_thickness.describe(percentiles=[]))
+    print('\n')
+    print("两种方法的厚度差值: mm")
+    print((ascan_thickness-normal_thickness).abs().describe(percentiles=[]))
+    print('\n')
+    print("两种方法的厚度差值百分比 (以Ascan厚度为基准): %")
+    print(((ascan_thickness-normal_thickness)/ascan_thickness*100).abs().describe(percentiles=[]))
+    print('\n')
+
+
 path = '../Dataset/GlaucomaThickness'
 ascan_path = f'{path}/Export_Ascan'
 normal_path = f'{path}/Export_Normal'
@@ -65,47 +86,9 @@ normal_path = f'{path}/Export_Normal'
 ascan_thickness_with_info = prepare_thickness(ascan_path)
 normal_thickness_with_info = prepare_thickness(normal_path)
 
-# remove columns of info
-ascan_thickness = ascan_thickness_with_info.drop(['Entry', 'Eye', 'Protocol'], axis=1)
-normal_thickness = normal_thickness_with_info.drop(['Entry', 'Eye', 'Protocol'], axis=1)
-# print(ascan_thickness)
-# print(normal_thickness)
-print("统计\n")
-print("基于Ascan厚度: mm")
-print(ascan_thickness.describe(percentiles=[]))
-print('\n')
-print("基于法线厚度: mm")
-print(normal_thickness.describe(percentiles=[]))
-print('\n')
-print("两种方法的厚度差值: mm")
-print((ascan_thickness-normal_thickness).abs().describe(percentiles=[]))
-print('\n')
-print("两种方法的厚度差值百分比 (以Ascan厚度为基准): %")
-print(((ascan_thickness-normal_thickness)/ascan_thickness*100).abs().describe(percentiles=[]))
+filters = [{'Eye': 'OS', 'Protocol': 'Angio 6x6'}, {'Eye': 'OS', 'Protocol': 'Cube 12x9'}, {'Eye': 'OD', 'Protocol': 'Angio 6x6'}, {'Eye': 'OD', 'Protocol': 'Cube 12x9'}]
 
-# # for c in ['R1', 'R2', 'R3', 'R4', 'R5', 'R6']:
-# for c in ['R1']:
-#     c1 = thickness_sorted[c].reset_index(drop=True)
-#     c2 = thickness_shuffle[c].reset_index(drop=True)
-#     diff = c1-c2
-#     print(diff)
-#     # Calculate mean
-#     mean_value = diff.mean()
-#
-#     # Calculate standard deviation
-#     std_deviation = diff.std()
-#
-#     # Calculate minimum and maximum
-#     min_value = diff.min()
-#     max_value = diff.max()
-#
-#     # Calculate other statistics using describe method
-#     statistics_summary = diff.describe()
-#
-#     # Print the results
-#     print(f"Mean: {mean_value}")
-#     print(f"Standard Deviation: {std_deviation}")
-#     print(f"Minimum: {min_value}")
-#     print(f"Maximum: {max_value}")
-#     print("\nAdditional statistics summary:")
-#     print(statistics_summary)
+for filter in filters:
+    ascan_thickness = ascan_thickness_with_info[(ascan_thickness_with_info['Eye']==filter['Eye'])&(ascan_thickness_with_info['Protocol']==filter['Protocol'])]
+    normal_thickness = normal_thickness_with_info[(normal_thickness_with_info['Eye']==filter['Eye'])&(normal_thickness_with_info['Protocol']==filter['Protocol'])]
+    stats(ascan_thickness,normal_thickness,filter)
