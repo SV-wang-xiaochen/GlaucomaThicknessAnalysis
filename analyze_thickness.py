@@ -66,18 +66,17 @@ def stats(ascan_thickness, normal_thickness, filter):
 
     print(f"统计-{filter['Eye']}-{filter['Protocol']}\n")
     print("基于Ascan厚度: mm")
-    print(ascan_thickness.describe(percentiles=[]))
+    print(ascan_thickness.describe(percentiles=[]).apply(lambda x:round(x,3)))
     print('\n')
     print("基于法线厚度: mm")
-    print(normal_thickness.describe(percentiles=[]))
+    print(normal_thickness.describe(percentiles=[]).apply(lambda x:round(x,3)))
     print('\n')
-    print("两种方法的厚度差值: mm")
-    print((ascan_thickness-normal_thickness).abs().describe(percentiles=[]))
+    print("厚度差值(Ascan-法线): mm")
+    print((ascan_thickness-normal_thickness).describe(percentiles=[]).apply(lambda x:round(x,3)))
     print('\n')
-    print("两种方法的厚度差值百分比 (以Ascan厚度为基准): %")
-    print(((ascan_thickness-normal_thickness)/ascan_thickness*100).abs().describe(percentiles=[]))
+    print("厚度差值百分比 (以Ascan厚度为基准): %")
+    print(((ascan_thickness-normal_thickness)/ascan_thickness*100).describe(percentiles=[]).apply(lambda x:round(x,3)))
     print('\n')
-
 
 path = '../Dataset/GlaucomaThickness'
 ascan_path = f'{path}/Export_Ascan'
@@ -86,8 +85,8 @@ normal_path = f'{path}/Export_Normal'
 ascan_thickness_with_info = prepare_thickness(ascan_path)
 normal_thickness_with_info = prepare_thickness(normal_path)
 
-filters = [{'Eye': 'OS', 'Protocol': 'Angio 6x6'}, {'Eye': 'OS', 'Protocol': 'Cube 12x9'}, {'Eye': 'OD', 'Protocol': 'Angio 6x6'}, {'Eye': 'OD', 'Protocol': 'Cube 12x9'}]
-
+filters = [{'Eye': 'OS', 'Protocol': 'Angio 6x6'}]
+# filters = [{'Eye': 'OS', 'Protocol': 'Angio 6x6'}, {'Eye': 'OS', 'Protocol': 'Cube 12x9'}, {'Eye': 'OD', 'Protocol': 'Angio 6x6'}, {'Eye': 'OD', 'Protocol': 'Cube 12x9'}]
 for filter in filters:
     ascan_thickness = ascan_thickness_with_info[(ascan_thickness_with_info['Eye']==filter['Eye'])&(ascan_thickness_with_info['Protocol']==filter['Protocol'])]
     normal_thickness = normal_thickness_with_info[(normal_thickness_with_info['Eye']==filter['Eye'])&(normal_thickness_with_info['Protocol']==filter['Protocol'])]
