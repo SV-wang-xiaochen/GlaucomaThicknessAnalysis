@@ -33,7 +33,7 @@ def prepare_thickness(path):
 
     folder_list = glob.glob(f'{path}/*/')
 
-    thickness = pd.DataFrame(columns=['Entry', 'Eye', 'Protocol', 'R1', 'R2', 'R3', 'R4', 'R5', 'R6'])
+    thickness = pd.DataFrame(columns=['Entry', 'Eye', 'Protocol', 'Region1', 'Region2', 'Region3', 'Region4', 'Region5', 'Region6'])
 
     for item in folder_list:
 
@@ -45,7 +45,7 @@ def prepare_thickness(path):
 
         thickness_csv = get_latest_file(csv_list)
 
-        thickness_row = pd.read_csv(thickness_csv, sep=',', names=['R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'INVALID'])
+        thickness_row = pd.read_csv(thickness_csv, sep=',', names=['Region1', 'Region2', 'Region3', 'Region4', 'Region5', 'Region6', 'INVALID'])
         thickness_row = thickness_row.iloc[:, 0:6]
 
         info, eye, protocol = extract_info(folder_name)
@@ -68,11 +68,20 @@ normal_thickness_with_info = prepare_thickness(normal_path)
 # remove columns of info
 ascan_thickness = ascan_thickness_with_info.drop(['Entry', 'Eye', 'Protocol'], axis=1)
 normal_thickness = normal_thickness_with_info.drop(['Entry', 'Eye', 'Protocol'], axis=1)
-print(ascan_thickness)
-print(normal_thickness)
-print(ascan_thickness.describe())
-print(normal_thickness.describe())
-print((ascan_thickness-normal_thickness).describe())
+# print(ascan_thickness)
+# print(normal_thickness)
+print("统计\n")
+print("基于Ascan厚度: mm")
+print(ascan_thickness.describe(percentiles=[]))
+print('\n')
+print("基于法线厚度: mm")
+print(normal_thickness.describe(percentiles=[]))
+print('\n')
+print("两种方法的厚度差值: mm")
+print((ascan_thickness-normal_thickness).abs().describe(percentiles=[]))
+print('\n')
+print("两种方法的厚度差值百分比 (以Ascan厚度为基准): %")
+print(((ascan_thickness-normal_thickness)/ascan_thickness*100).abs().describe(percentiles=[]))
 
 # # for c in ['R1', 'R2', 'R3', 'R4', 'R5', 'R6']:
 # for c in ['R1']:
