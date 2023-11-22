@@ -2,7 +2,7 @@ import os
 import glob
 import pandas as pd
 import re
-import numpy as np
+
 
 def get_latest_file(file_path_list):
 
@@ -18,6 +18,7 @@ def get_latest_file(file_path_list):
 
 
 def extract_info(input_string):
+
     pattern = re.compile("00331_(?P<ID>\w+)_00331_.*_(?P<EYE>OS|OD)_.*_(?P<PROTOCOL>Cube 12x9|Angio 6x6)")
 
     match = pattern.match(input_string)
@@ -28,68 +29,74 @@ def extract_info(input_string):
         return None
 
 
-path = r'..\Dataset\GlaucomaThickness\Export_20231120'
-folder_list = glob.glob(f'{path}/*/')
+def prepare_thickness(path):
 
-thickness = pd.DataFrame(columns=['Entry', 'Eye', 'Protocol', 'R1', 'R2', 'R3', 'R4', 'R5', 'R6'])
+    folder_list = glob.glob(f'{path}/*/')
 
-for item in folder_list[:10]:
+    thickness = pd.DataFrame(columns=['Entry', 'Eye', 'Protocol', 'R1', 'R2', 'R3', 'R4', 'R5', 'R6'])
 
-    folder_name = item.split('\\')[-2]
-    print(f'folder name: {folder_name}')
+    for item in folder_list:
 
-    subfolder_path = f'{item}Quantization/*.csv'
+        folder_name = item.split('\\')[-2]
 
-    csv_list = glob.glob(subfolder_path)
+        subfolder_path = f'{item}Quantization/*.csv'
 
-    thickness_csv = get_latest_file(csv_list)
-    print(f'lastest csv: {thickness_csv}')
-    print('\n')
+        csv_list = glob.glob(subfolder_path)
 
-    thickness_row = pd.read_csv(thickness_csv, sep=',', names=['R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'INVALID'])
-    thickness_row = thickness_row.iloc[:, 0:6]
+        thickness_csv = get_latest_file(csv_list)
 
-    info, eye, protocol = extract_info(folder_name)
-    thickness_row.insert(0, 'Protocol', protocol)
-    thickness_row.insert(0, 'Eye', eye)
-    thickness_row.insert(0, 'Entry', info)
-    thickness = pd.concat([thickness, thickness_row])
+        thickness_row = pd.read_csv(thickness_csv, sep=',', names=['R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'INVALID'])
+        thickness_row = thickness_row.iloc[:, 0:6]
 
-thickness = thickness.reset_index(drop=True)
-print(thickness)
+        info, eye, protocol = extract_info(folder_name)
+        thickness_row.insert(0, 'Protocol', protocol)
+        thickness_row.insert(0, 'Eye', eye)
+        thickness_row.insert(0, 'Entry', info)
+        thickness = pd.concat([thickness, thickness_row])
 
-thickness_sorted = thickness.sort_values('Entry')
-# print(thickness_sorted)
+    thickness = thickness.sort_values('Entry').reset_index(drop=True)
 
-thickness_shuffle = thickness.sample(frac=1)
-# print(thickness_shuffle)
+    return thickness
 
-# a = thickness_sorted.drop(['Entry', 'Eye', 'Protocol'], axis=1)
-# b = thickness_shuffle.drop(['Entry', 'Eye', 'Protocol'], axis=1)
+path = '../Dataset/GlaucomaThickness'
+ascan_path = f'{path}/Export_Ascan'
+normal_path = f'{path}/Export_Normal'
+
+ascan_thickness_with_info = prepare_thickness(ascan_path)
+normal_thickness_with_info = prepare_thickness(normal_path)
+
+# remove columns of info
+ascan_thickness = ascan_thickness_with_info.drop(['Entry', 'Eye', 'Protocol'], axis=1)
+normal_thickness = normal_thickness_with_info.drop(['Entry', 'Eye', 'Protocol'], axis=1)
+print(ascan_thickness)
+print(normal_thickness)
+print(ascan_thickness.describe())
+print(normal_thickness.describe())
+print((ascan_thickness-normal_thickness).describe())
 
 # # for c in ['R1', 'R2', 'R3', 'R4', 'R5', 'R6']:
-for c in ['R1']:
-    c1 = thickness_sorted[c].reset_index(drop=True)
-    c2 = thickness_shuffle[c].reset_index(drop=True)
-    diff = c1-c2
-    print(diff)
-    # Calculate mean
-    mean_value = diff.mean()
-
-    # Calculate standard deviation
-    std_deviation = diff.std()
-
-    # Calculate minimum and maximum
-    min_value = diff.min()
-    max_value = diff.max()
-
-    # Calculate other statistics using describe method
-    statistics_summary = diff.describe()
-
-    # Print the results
-    print(f"Mean: {mean_value}")
-    print(f"Standard Deviation: {std_deviation}")
-    print(f"Minimum: {min_value}")
-    print(f"Maximum: {max_value}")
-    print("\nAdditional statistics summary:")
-    print(statistics_summary)
+# for c in ['R1']:
+#     c1 = thickness_sorted[c].reset_index(drop=True)
+#     c2 = thickness_shuffle[c].reset_index(drop=True)
+#     diff = c1-c2
+#     print(diff)
+#     # Calculate mean
+#     mean_value = diff.mean()
+#
+#     # Calculate standard deviation
+#     std_deviation = diff.std()
+#
+#     # Calculate minimum and maximum
+#     min_value = diff.min()
+#     max_value = diff.max()
+#
+#     # Calculate other statistics using describe method
+#     statistics_summary = diff.describe()
+#
+#     # Print the results
+#     print(f"Mean: {mean_value}")
+#     print(f"Standard Deviation: {std_deviation}")
+#     print(f"Minimum: {min_value}")
+#     print(f"Maximum: {max_value}")
+#     print("\nAdditional statistics summary:")
+#     print(statistics_summary)
