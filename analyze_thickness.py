@@ -2,6 +2,8 @@ import os
 import glob
 import pandas as pd
 import re
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 def get_latest_file(file_path_list):
@@ -77,6 +79,7 @@ def stats(ascan_thickness, normal_thickness, filter):
     print("厚度差值百分比 (以Ascan厚度为基准): %")
     print(((ascan_thickness-normal_thickness)/ascan_thickness*100).describe(percentiles=[]).apply(lambda x:round(x,3)))
     print('\n')
+    # print(ascan_thickness.describe(percentiles=[])['mean'])
 
 path = '../Dataset/GlaucomaThickness'
 ascan_path = f'{path}/Export_Ascan'
@@ -85,9 +88,31 @@ normal_path = f'{path}/Export_Normal'
 ascan_thickness_with_info = prepare_thickness(ascan_path)
 normal_thickness_with_info = prepare_thickness(normal_path)
 
-filters = [{'Eye': 'OS', 'Protocol': 'Angio 6x6'}]
-# filters = [{'Eye': 'OS', 'Protocol': 'Angio 6x6'}, {'Eye': 'OS', 'Protocol': 'Cube 12x9'}, {'Eye': 'OD', 'Protocol': 'Angio 6x6'}, {'Eye': 'OD', 'Protocol': 'Cube 12x9'}]
+# filters = [{'Eye': 'OS', 'Protocol': 'Angio 6x6'}]
+# filters = [{'Eye': 'OS', 'Protocol': 'Angio 6x6'}, {'Eye': 'OS', 'Protocol': 'Cube 12x9'}]
+filters = [{'Eye': 'OS', 'Protocol': 'Angio 6x6'}, {'Eye': 'OS', 'Protocol': 'Cube 12x9'}, {'Eye': 'OD', 'Protocol': 'Angio 6x6'}, {'Eye': 'OD', 'Protocol': 'Cube 12x9'}]
 for filter in filters:
     ascan_thickness = ascan_thickness_with_info[(ascan_thickness_with_info['Eye']==filter['Eye'])&(ascan_thickness_with_info['Protocol']==filter['Protocol'])]
     normal_thickness = normal_thickness_with_info[(normal_thickness_with_info['Eye']==filter['Eye'])&(normal_thickness_with_info['Protocol']==filter['Protocol'])]
     stats(ascan_thickness,normal_thickness,filter)
+
+
+angio_mean = [2, 8, 70, 1.5, 25, 12]
+cube_mean = [0.1, 17.5, 40, 48, 52, 69]
+diff = list(np.array(angio_mean) - np.array(cube_mean))
+
+index = ['R1', 'R2', 'R3', 'R4', 'R5', 'R6']
+df = pd.DataFrame({'OS-Angio 6×6': angio_mean, 'OS-Cube 12×9': cube_mean, 'Diff (Angio-Cube)': diff}, index=index)
+ax = df.plot.bar(rot=0, width=0.8)
+
+plt.xticks(fontsize=20)
+plt.xlabel('Region',fontsize=20)
+plt.ylabel('Thickness: mm',fontsize=20)
+plt.title('Mean',fontsize=30)
+
+# Add values on top of each bar
+for i, v in enumerate(df.values):
+    for j, val in enumerate(v):
+        ax.text(i + (j-1) * 0.2, val + 1, str(round(val, 3)), ha='center', va='bottom')
+
+plt.show()
