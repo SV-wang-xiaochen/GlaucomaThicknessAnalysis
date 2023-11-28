@@ -61,7 +61,7 @@ def prepare_thickness(path, direction):
     thickness_dic = {'Direction': direction, 'Data': thickness}
     return thickness_dic
 
-def statsDirectionComparison(thickness_list, filters):
+def statsDirectionComparison(thickness_list, filters, only_diff):
 
     for filter in filters:
         thickness0_data_with_info = thickness_list[0]['Data'][(thickness_list[0]['Data']['Eye']==filter['Eye'])&(thickness_list[0]['Data']['Protocol']==filter['Protocol'])]
@@ -95,9 +95,19 @@ def statsDirectionComparison(thickness_list, filters):
         diff = diff_stats.loc['mean'].values
 
         index = ['R1', 'R2', 'R3', 'R4', 'R5', 'R6']
-        df = pd.DataFrame({f"{thickness_list[0]['Direction']}": thinkness0_mean, f"{thickness_list[1]['Direction']}": thickness1_mean, f"Diff ({thickness_list[0]['Direction']}-{thickness_list[1]['Direction']})": diff}, index=index)
+
+        if only_diff:
+            df = pd.DataFrame({f"Diff ({thickness_list[0]['Direction']}-{thickness_list[1]['Direction']})": diff}, index=index)
+        else:
+            df = pd.DataFrame({f"{thickness_list[0]['Direction']}": thinkness0_mean,
+                               f"{thickness_list[1]['Direction']}": thickness1_mean,
+                               f"Diff ({thickness_list[0]['Direction']}-{thickness_list[1]['Direction']})": diff},
+                              index=index)
+
         ax = df.plot.bar(rot=0, width=0.8)
 
+        if only_diff:
+            plt.ylim([0, 0.4])
         plt.xticks(fontsize=20)
         plt.xlabel('Region',fontsize=20)
         plt.ylabel('Thickness: mm',fontsize=20)
@@ -106,20 +116,21 @@ def statsDirectionComparison(thickness_list, filters):
         # Add values on top of each bar
         for i, v in enumerate(df.values):
             for j, val in enumerate(v):
-                ax.text(i + (j-1) * 0.2, val + 1, str(round(val, 3)), ha='center', va='bottom', fontsize='12')
-
+                if only_diff:
+                    ax.text(i + (j - 1) * 0.15, val + 0.02, str(round(val, 3)), ha='center', va='top', fontsize='20')
+                else:
+                    ax.text(i + (j - 1) * 0.2, val + 1, str(round(val, 3)), ha='center', va='bottom', fontsize='12')
         plt.show()
 
 
-def statsProtocolComparison(thickness_dic, filters):
+def statsProtocolComparison(thickness_dic, filters, only_diff):
 
     for filter in filters:
         thickness0_data_with_info = thickness_dic['Data'][(thickness_dic['Data']['Eye'] == filter['Eye']) & (
                     thickness_dic['Data']['Protocol'] == 'Angio 6x6')]
         thickness1_data_with_info = thickness_dic['Data'][(thickness_dic['Data']['Eye'] == filter['Eye']) & (
                     thickness_dic['Data']['Protocol'] == 'Cube 12x9')]
-        print(thickness0_data_with_info)
-        print(thickness1_data_with_info)
+
         # remove columns of info
         thickness0_data = thickness0_data_with_info.drop(['Entry', 'Eye', 'Protocol'], axis=1).reset_index(drop=True)
         thickness1_data = thickness1_data_with_info.drop(['Entry', 'Eye', 'Protocol'], axis=1).reset_index(drop=True)
@@ -148,7 +159,10 @@ def statsProtocolComparison(thickness_dic, filters):
         diff = diff_stats.loc['mean'].values
 
         index = ['R1', 'R2', 'R3', 'R4', 'R5', 'R6']
-        df = pd.DataFrame({'Angio 6x6': thinkness0_mean, 'Cube 12x9': thickness1_mean, 'Diff (Angio 6x6-Cube 12x9)': diff}, index=index)
+        if only_diff:
+            df = pd.DataFrame({'Diff (Angio 6x6-Cube 12x9)': diff},index=index)
+        else:
+            df = pd.DataFrame({'Angio 6x6': thinkness0_mean, 'Cube 12x9': thickness1_mean, 'Diff (Angio 6x6-Cube 12x9)': diff}, index=index)
         ax = df.plot.bar(rot=0, width=0.8)
 
         plt.xticks(fontsize=20)
@@ -159,8 +173,10 @@ def statsProtocolComparison(thickness_dic, filters):
         # Add values on top of each bar
         for i, v in enumerate(df.values):
             for j, val in enumerate(v):
-                ax.text(i + (j-1) * 0.2, val + 1, str(round(val, 3)), ha='center', va='bottom', fontsize='12')
-
+                if only_diff:
+                    ax.text(i + (j - 1) * 0.15, val + 0.05, str(round(val, 3)), ha='center', va='top', fontsize='20')
+                else:
+                    ax.text(i + (j-1) * 0.2, val + 1, str(round(val, 3)), ha='center', va='bottom', fontsize='12')
         plt.show()
 
 
@@ -176,11 +192,11 @@ normal_thickness_dic = prepare_thickness(normal_path, 'Normal')
 filters = [{'Eye': 'OS', 'Protocol': 'Angio 6x6'}, {'Eye': 'OS', 'Protocol': 'Cube 12x9'}]
 # filters = [{'Eye': 'OS', 'Protocol': 'Angio 6x6'}, {'Eye': 'OS', 'Protocol': 'Cube 12x9'}, {'Eye': 'OD', 'Protocol': 'Angio 6x6'}, {'Eye': 'OD', 'Protocol': 'Cube 12x9'}]
 
-statsDirectionComparison([ascan_thickness_dic, normal_thickness_dic], filters)
+statsDirectionComparison([ascan_thickness_dic, normal_thickness_dic], filters, True)
 
 # Comparison between different protocols, the same method
 filters = [{'Eye': 'OS'}]
 # filters = [{'Eye': 'OS'}, {'Eye': 'OD'}]
 
-statsProtocolComparison(ascan_thickness_dic, filters)
-statsProtocolComparison(normal_thickness_dic, filters)
+statsProtocolComparison(ascan_thickness_dic, filters, True)
+statsProtocolComparison(normal_thickness_dic, filters, True)
