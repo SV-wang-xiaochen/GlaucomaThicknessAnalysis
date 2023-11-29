@@ -21,12 +21,12 @@ def get_latest_file(file_path_list):
 
 def extract_info(input_string):
 
-    pattern = re.compile("00331_(?P<ID>\w+)_00331_.*_(?P<EYE>OS|OD)_.*_(?P<PROTOCOL>Cube 12x9|Angio 6x6)")
+    pattern = re.compile("00331_(?P<ID>\w+)_00331_(?P<ORIGINAL_ID>\w+)_(?P<EYE>OS|OD)_.*_(?P<PROTOCOL>Cube 12x9|Angio 6x6)")
 
     match = pattern.match(input_string)
 
     if match:
-        return f"{match.group('ID')}_{match.group('EYE')}_{match.group('PROTOCOL')}", match.group('EYE'), match.group('PROTOCOL')
+        return f"{match.group('ID')}_{match.group('EYE')}_{match.group('PROTOCOL')}", match.group('ORIGINAL_ID'), match.group('EYE'), match.group('PROTOCOL')
     else:
         return None
 
@@ -35,7 +35,7 @@ def prepare_thickness(path, direction):
 
     folder_list = glob.glob(f'{path}/*/')
 
-    thickness = pd.DataFrame(columns=['Entry', 'Eye', 'Protocol', 'Region1', 'Region2', 'Region3', 'Region4', 'Region5', 'Region6'])
+    thickness = pd.DataFrame(columns=['Entry', 'Original ID', 'Eye', 'Protocol', 'Region1', 'Region2', 'Region3', 'Region4', 'Region5', 'Region6'])
 
     for item in folder_list:
 
@@ -50,9 +50,10 @@ def prepare_thickness(path, direction):
         thickness_row = pd.read_csv(thickness_csv, sep=',', names=['Region1', 'Region2', 'Region3', 'Region4', 'Region5', 'Region6', 'INVALID'])
         thickness_row = thickness_row.iloc[:, 0:6]
 
-        info, eye, protocol = extract_info(folder_name)
+        info, original_id, eye, protocol = extract_info(folder_name)
         thickness_row.insert(0, 'Protocol', protocol)
         thickness_row.insert(0, 'Eye', eye)
+        thickness_row.insert(0, 'Original ID', original_id)
         thickness_row.insert(0, 'Entry', info)
         thickness = pd.concat([thickness, thickness_row])
 
@@ -68,8 +69,8 @@ def statsDirectionComparison(thickness_list, filters, only_diff):
         thickness1_data_with_info = thickness_list[1]['Data'][(thickness_list[1]['Data']['Eye']==filter['Eye'])&(thickness_list[1]['Data']['Protocol']==filter['Protocol'])]
 
         # remove columns of info
-        thickness0_data = thickness0_data_with_info.drop(['Entry', 'Eye', 'Protocol'], axis=1)
-        thickness1_data = thickness1_data_with_info.drop(['Entry', 'Eye', 'Protocol'], axis=1)
+        thickness0_data = thickness0_data_with_info.drop(['Entry', 'Original ID', 'Eye', 'Protocol'], axis=1)
+        thickness1_data = thickness1_data_with_info.drop(['Entry', 'Original ID', 'Eye', 'Protocol'], axis=1)
 
         thickness0_stats = thickness0_data.describe(percentiles=[]).apply(lambda x:round(x,3))
         thickness1_stats = thickness1_data.describe(percentiles=[]).apply(lambda x: round(x, 3))
@@ -132,8 +133,8 @@ def statsProtocolComparison(thickness_dic, filters, only_diff):
                     thickness_dic['Data']['Protocol'] == 'Cube 12x9')]
 
         # remove columns of info
-        thickness0_data = thickness0_data_with_info.drop(['Entry', 'Eye', 'Protocol'], axis=1).reset_index(drop=True)
-        thickness1_data = thickness1_data_with_info.drop(['Entry', 'Eye', 'Protocol'], axis=1).reset_index(drop=True)
+        thickness0_data = thickness0_data_with_info.drop(['Entry', 'Original ID', 'Eye', 'Protocol'], axis=1).reset_index(drop=True)
+        thickness1_data = thickness1_data_with_info.drop(['Entry', 'Original ID', 'Eye', 'Protocol'], axis=1).reset_index(drop=True)
 
         thickness0_stats = thickness0_data.describe(percentiles=[]).apply(lambda x:round(x,3))
         thickness1_stats = thickness1_data.describe(percentiles=[]).apply(lambda x: round(x, 3))
@@ -186,6 +187,10 @@ normal_path = f'{path}/Export_Normal'
 
 ascan_thickness_dic = prepare_thickness(ascan_path, 'Ascan')
 normal_thickness_dic = prepare_thickness(normal_path, 'Normal')
+
+# # uncomment to save data to csv
+# ascan_thickness_dic['Data'].to_csv('ascan.csv', index=False)
+# normal_thickness_dic['Data'].to_csv('normal.csv', index=False)
 
 # Comparison between different methods, the same protocol
 # filters = [{'Eye': 'OS', 'Protocol': 'Cube 12x9'}]
